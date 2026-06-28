@@ -1,0 +1,17 @@
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\JellyfinMasonry.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\JellyfinMasonry.deps.json
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\JellyfinMasonry.pdb
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\Diacritics.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\ICU4N.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\ICU4N.Transliterator.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\J2N.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\MediaBrowser.Common.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\MediaBrowser.Controller.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\Jellyfin.Data.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\Jellyfin.Extensions.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\MediaBrowser.Model.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\Emby.Naming.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\Microsoft.Extensions.Configuration.Binder.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\dist\JellyfinMasonry.xml

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <AssemblyName>JellyfinMasonry</AssemblyName>
+    <RootNamespace>JellyfinMasonry</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Version>1.0.0</Version>
+    <Authors>KBH-Reeper</Authors>
+    <Description>Masonry Layout Plugin for Jellyfin</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.8">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="Jellyfin.Model" Version="10.11.8">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

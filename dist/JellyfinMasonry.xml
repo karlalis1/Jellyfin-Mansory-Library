@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>JellyfinMasonry</name>
+    </assembly>
+    <members>
+        <member name="M:JellyfinMasonry.Api.MasonryController.GetRatios(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get cached aspect ratios for a library.
+            Returns { "itemId": ratio, ... }
+            </summary>
+        </member>
+        <member name="M:JellyfinMasonry.Api.MasonryController.RefreshRatios(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Force refresh cache for a specific library.
+            </summary>
+        </member>
+        <member name="M:JellyfinMasonry.Api.MasonryController.RefreshAllRatios(System.Threading.CancellationToken)">
+            <summary>
+            Force refresh cache for all libraries.
+            </summary>
+        </member>
+        <member name="M:JellyfinMasonry.Api.MasonryController.GetStatus(System.Nullable{System.Guid})">
+            <summary>
+            Get cache status.
+            </summary>
+        </member>
+        <member name="P:JellyfinMasonry.Configuration.PluginConfiguration.CacheTtlHours">
+            <summary>
+            Cache TTL in hours.
+            </summary>
+        </member>
+        <member name="P:JellyfinMasonry.Configuration.PluginConfiguration.AutoRefreshAfterScan">
+            <summary>
+            Auto-refresh cache after library scan.
+            </summary>
+        </member>
+    </members>
+</doc>

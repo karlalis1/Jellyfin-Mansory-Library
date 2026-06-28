@@ -1,0 +1,131 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "JellyfinMasonry/1.0.0": {
+        "dependencies": {
+          "Jellyfin.Model": "10.11.8"
+        },
+        "runtime": {
+          "JellyfinMasonry.dll": {}
+        }
+      },
+      "Jellyfin.Data/10.11.8": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging": "9.0.11"
+        }
+      },
+      "Jellyfin.Model/10.11.8": {
+        "dependencies": {
+          "Jellyfin.Data": "10.11.8",
+          "Microsoft.Extensions.Logging.Abstractions": "9.0.11"
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions/9.0.11": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.1125.51716"
+          }
+        }
+      },
+      "Microsoft.Extensions.Logging/9.0.11": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "9.0.11",
+          "Microsoft.Extensions.Options": "9.0.11"
+        }
+      },
+      "Microsoft.Extensions.Logging.Abstractions/9.0.11": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.11"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Logging.Abstractions.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.1125.51716"
+          }
+        }
+      },
+      "Microsoft.Extensions.Options/9.0.11": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.11",
+          "Microsoft.Extensions.Primitives": "9.0.11"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Options.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.1125.51716"
+          }
+        }
+      },
+      "Microsoft.Extensions.Primitives/9.0.11": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Primitives.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.1125.51716"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "JellyfinMasonry/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Jellyfin.Data/10.11.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-PEKD8+zYl79OzdT5HCTOsPoSNCjGWjdPkj2EVROcKxGmIo2ynpJacE2CgmXjH7iSLU3H9vpn6LCKVcs0hv7u1Q==",
+      "path": "jellyfin.data/10.11.8",
+      "hashPath": "jellyfin.data.10.11.8.nupkg.sha512"
+    },
+    "Jellyfin.Model/10.11.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-IDMW4pyr3JyQ/2DJDQixNyWQhoJCkCdHTKbSaeivcL0/7NJ7eZoEoUIE376qVhENq4+i7eeuel185752xAoDlA==",
+      "path": "jellyfin.model/10.11.8",
+      "hashPath": "jellyfin.model.10.11.8.nupkg.sha512"
+    },
+    "Microsoft.Extensions.DependencyInjection.Abstractions/9.0.11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-+ZxxZzcVU+IEzq12GItUzf/V3mEc5nSLiXijwvDc4zyhbjvSZZ043giSZqGnhakrjwRWjkerIHPrRwm9okEIpw==",
+      "path": "microsoft.extensions.dependencyinjection.abstractions/9.0.11",
+      "hashPath": "microsoft.extensions.dependencyinjection.abstractions.9.0.11.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging/9.0.11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-PVHYgMmMZFEE3PGpc7oZ9CnoyNonNyT5klrV9pNIzCPxL12FpQ7kNhliXAwowmtaDVBmKnG/1db6d7gqPwDj8g==",
+      "path": "microsoft.extensions.logging/9.0.11",
+      "hashPath": "microsoft.extensions.logging.9.0.11.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging.Abstractions/9.0.11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-UKWFTDwtZQIoypyt1YPVsxTnDK+0sKn26+UeSGeNlkRQddrkt9EC6kP4g94rgO/WOZkz94bKNlF1dVZN3QfPFQ==",
+      "path": "microsoft.extensions.logging.abstractions/9.0.11",
+      "hashPath": "microsoft.extensions.logging.abstractions.9.0.11.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Options/9.0.11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-HX4M3BLkW1dtByMKHDVq6r7Jy6e4hf8NDzHpIgz7C8BtYk9JQHhfYX5c1UheQTD5Veg1yBhz/cD9C8vtrGrk9w==",
+      "path": "microsoft.extensions.options/9.0.11",
+      "hashPath": "microsoft.extensions.options.9.0.11.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Primitives/9.0.11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-rtUNSIhbQTv8iSBTFvtg2b/ZUkoqC9qAH9DdC2hr+xPpoZrxiCITci9UR/ELUGUGnGUrF8Xye+tGVRhCxE+4LA==",
+      "path": "microsoft.extensions.primitives/9.0.11",
+      "hashPath": "microsoft.extensions.primitives.9.0.11.nupkg.sha512"
+    }
+  }
+}

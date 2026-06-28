@@ -1,0 +1,14 @@
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\obj\Release\net8.0\JellyfinMasonry.csproj.AssemblyReference.cache
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\obj\Release\net8.0\JellyfinMasonry.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\obj\Release\net8.0\JellyfinMasonry.AssemblyInfoInputs.cache
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\obj\Release\net8.0\JellyfinMasonry.AssemblyInfo.cs
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\obj\Release\net8.0\JellyfinMasonry.csproj.CoreCompileInputs.cache
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\bin\Release\net8.0\JellyfinMasonry.deps.json
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\bin\Release\net8.0\JellyfinMasonry.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\bin\Release\net8.0\JellyfinMasonry.pdb
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\bin\Release\net8.0\JellyfinMasonry.xml
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\obj\Release\net8.0\JellyfinMasonry.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\obj\Release\net8.0\refint\JellyfinMasonry.dll
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\obj\Release\net8.0\JellyfinMasonry.xml
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\obj\Release\net8.0\JellyfinMasonry.pdb
+C:\Users\cring\Desktop\programm projects\Jellyfin Library\JellyfinMasonry\obj\Release\net8.0\ref\JellyfinMasonry.dll
