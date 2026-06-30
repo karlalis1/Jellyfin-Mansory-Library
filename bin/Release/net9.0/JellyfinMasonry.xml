@@ -10,6 +10,16 @@
             Returns { "itemId": ratio, ... }
             </summary>
         </member>
+        <member name="M:JellyfinMasonry.Api.MasonryController.LookupRatios(JellyfinMasonry.Api.RatioLookupRequest,System.Threading.CancellationToken)">
+            <summary>
+            Get cached aspect ratios for a specific subset of items.
+            </summary>
+        </member>
+        <member name="M:JellyfinMasonry.Api.MasonryController.LookupLayout(JellyfinMasonry.Api.RatioLookupRequest,System.Threading.CancellationToken)">
+            <summary>
+            Get precomputed layout metadata for a specific subset of items.
+            </summary>
+        </member>
         <member name="M:JellyfinMasonry.Api.MasonryController.RefreshRatios(System.Guid,System.Threading.CancellationToken)">
             <summary>
             Force refresh cache for a specific library.

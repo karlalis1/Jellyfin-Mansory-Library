@@ -1,10 +1,24 @@
 const COLUMN_WIDTH = 236;
 const GAP = 14;
 const DEFAULT_RATIO = 16 / 9;
+const BATCH_SIZE = 24;
+const RATIO_REQUEST_BATCH_SIZE = 150;
+const INITIAL_CARD_LIMIT = 24;
+const SCROLL_INCREMENT = 12;
+const AUTO_EXPAND_STEPS = 0;
+const AUTO_EXPAND_DELAY_MS = 350;
+const DEBUG_LOGS = false;
 const STYLE_ID = "jellyfin-masonry-plugin-styles";
+const STATUS_CLASS = "jellyfin-masonry-status";
 const ratioMaps = {};
 const runningParents = new Set();
-const ratioDetailHydratedParents = new Set();
+const itemDetailRatioAttempts = new Set();
+
+function debugLog(...args) {
+    if (DEBUG_LOGS) {
+        console.log(...args);
+    }
+}
 
 function getStoredServer() {
     try {
@@ -54,10 +68,12 @@ function ensureStyles() {
             column-gap: ${GAP}px !important;
             width: 100% !important;
             padding: 6px 4px 24px !important;
+            height: auto !important;
         }
 
         .itemsContainer[data-masonry-active="1"] > .card {
             display: inline-block !important;
+            position: relative !important;
             width: 100% !important;
             margin: 0 0 ${GAP}px !important;
             padding: 0 !important;
@@ -68,12 +84,11 @@ function ensureStyles() {
             page-break-inside: avoid !important;
             overflow: visible !important;
             border-radius: 20px !important;
-            transition: transform 180ms ease, filter 180ms ease !important;
+            transition: filter 180ms ease !important;
             filter: none !important;
         }
 
         .itemsContainer[data-masonry-active="1"] > .card:hover {
-            transform: translateY(-2px) !important;
             filter: brightness(1.03) !important;
         }
 
@@ -183,38 +198,173 @@ function ensureStyles() {
         .itemsContainer[data-masonry-active="1"] .card[data-masonry-shape="portrait"] .cardBox {
             background: rgba(24, 24, 28, 0.94) !important;
         }
+
+        .${STATUS_CLASS} {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            margin: 12px 0 18px !important;
+            padding: 7px 12px !important;
+            border-radius: 999px !important;
+            background: rgba(26, 26, 30, 0.9) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: rgba(255, 255, 255, 0.88) !important;
+            font-size: 0.92rem !important;
+            line-height: 1.2 !important;
+            white-space: nowrap !important;
+        }
+
+        .${STATUS_CLASS}[data-masonry-status-state="loading"] {
+            color: #ffd27a !important;
+        }
+
+        .${STATUS_CLASS}[data-masonry-status-state="complete"] {
+            color: #9be59b !important;
+        }
     `;
 
     document.head.appendChild(style);
 }
 
-async function getRatios(parentId) {
-    if (ratioMaps[parentId]) return ratioMaps[parentId];
+function isPaginationControl(element) {
+    if (!element) return false;
 
-    try {
-        const res = await fetch(
-            buildUrl(`/Masonry/Ratios/${parentId}`),
-            { headers: { "X-Emby-Token": getToken() } }
-        );
+    const text = [
+        element.getAttribute("title"),
+        element.getAttribute("aria-label"),
+        element.textContent
+    ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const data = await res.json();
-        ratioMaps[parentId] = data;
-        console.log("Masonry: Ratios vom Server geladen:", Object.keys(data).length, "Items");
-        return data;
-    } catch (e) {
-        console.warn("Masonry Plugin nicht erreichbar, fallback auf Jellyfin Items API:", e);
-        return null;
+    if (/(next|weiter|zurück|zurueck|previous|seite|page)/.test(text)) {
+        return true;
     }
+
+    return [...element.querySelectorAll(".material-icons, .material-icons-round, i")]
+        .some(icon => /(navigate_next|chevron_right|keyboard_arrow_right|navigate_before|chevron_left|keyboard_arrow_left)/i.test(icon.textContent || ""));
 }
 
-async function getRatiosFallback(ids) {
-    const ratioMap = {};
-    const userId = getUserId();
+function findStatusHost(container) {
+    const parent = container?.parentElement;
+    if (!parent) return null;
 
-    for (let i = 0; i < ids.length; i += 50) {
-        const batch = ids.slice(i, i + 50).join(",");
+    const controls = [...parent.querySelectorAll("button, a")].filter(isPaginationControl);
+    if (!controls.length) return null;
+
+    return controls[0].closest(".listPaging, .pagingContainer, .pagination, .sectionFooter, .itemsContainerFooter")
+        || controls[0].parentElement
+        || null;
+}
+
+function ensureStatusElement(container) {
+    const key = container.dataset.parentid || "default";
+    const parent = container.parentElement;
+    if (!parent) return null;
+
+    const host = findStatusHost(container);
+    if (host) {
+        let element = host.querySelector(`.${STATUS_CLASS}[data-masonry-status-for="${key}"]`);
+        if (!element) {
+            element = document.createElement("span");
+            element.className = STATUS_CLASS;
+            element.dataset.masonryStatusFor = key;
+            host.appendChild(element);
+        }
+        return element;
+    }
+
+    let element = parent.querySelector(`:scope > .${STATUS_CLASS}[data-masonry-status-for="${key}"]`);
+    if (!element) {
+        element = document.createElement("div");
+        element.className = STATUS_CLASS;
+        element.dataset.masonryStatusFor = key;
+        if (container.nextSibling) {
+            parent.insertBefore(element, container.nextSibling);
+        } else {
+            parent.appendChild(element);
+        }
+    }
+    return element;
+}
+
+function updateMasonryStatus(container, isComplete, visibleCount, totalCount) {
+    const element = ensureStatusElement(container);
+    if (!element) return;
+
+    const safeVisible = Math.min(Math.max(Number(visibleCount) || 0, 0), Number(totalCount) || 0);
+    const safeTotal = Math.max(Number(totalCount) || 0, 0);
+    element.dataset.masonryStatusState = isComplete ? "complete" : "loading";
+    element.textContent = isComplete
+        ? `Masonry: alle Items dieser Seite geladen (${safeVisible}/${safeTotal})`
+        : `Masonry: lädt noch (${safeVisible}/${safeTotal})`;
+}
+
+function ensureParentRatioMap(parentId) {
+    if (!ratioMaps[parentId]) {
+        ratioMaps[parentId] = {};
+    }
+
+    return ratioMaps[parentId];
+}
+
+async function fetchRatiosForIds(parentId, ids) {
+    const ratioMap = ensureParentRatioMap(parentId);
+    const idsToLoad = ids.filter(id => id && !ratioMap[id]);
+
+    if (!idsToLoad.length) {
+        return ratioMap;
+    }
+
+    let fetchedCount = 0;
+
+    for (let i = 0; i < idsToLoad.length; i += RATIO_REQUEST_BATCH_SIZE) {
+        const batch = idsToLoad.slice(i, i + RATIO_REQUEST_BATCH_SIZE);
+
+        try {
+            const res = await fetch(
+                buildUrl("/Masonry/Ratios/Lookup"),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Emby-Token": getToken()
+                    },
+                    body: JSON.stringify({
+                        parentId,
+                        itemIds: batch
+                    })
+                }
+            );
+
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            Object.assign(ratioMap, data || {});
+            fetchedCount += Object.keys(data || {}).length;
+        } catch (e) {
+            console.warn("Masonry ratio lookup failed, fallback to Jellyfin item API:", e);
+        }
+    }
+
+    if (fetchedCount) {
+        debugLog("Masonry: Ratios vom Server geladen:", fetchedCount, "Items");
+    }
+
+    return ratioMap;
+}
+
+async function getRatiosFallback(parentId, ids) {
+    const ratioMap = ensureParentRatioMap(parentId);
+    const userId = getUserId();
+    const idsToLoad = ids.filter(id => id && !ratioMap[id]);
+
+    for (let i = 0; i < idsToLoad.length; i += 50) {
+        const batchIds = idsToLoad.slice(i, i + 50);
+        const batch = batchIds.join(",");
 
         try {
             const query = userId
@@ -267,23 +417,38 @@ function extractRatioFromItem(item) {
     return null;
 }
 
-async function hydrateRatiosFromItemDetails(parentId, cards, baseRatioMap) {
-    if (ratioDetailHydratedParents.has(parentId)) {
-        return baseRatioMap;
-    }
+function getItemDetailAttemptKey(parentId, id) {
+    return `${parentId}:${id}`;
+}
 
+async function hydrateRatiosFromItemDetails(parentId, ids, baseRatioMap) {
     const userId = getUserId();
     if (!userId) {
         return baseRatioMap;
     }
 
-    const ratioMap = { ...(baseRatioMap || {}) };
-    const ids = cards
-        .map(card => card.dataset.id)
-        .filter(Boolean);
+    const ratioMap = ensureParentRatioMap(parentId);
+    Object.assign(ratioMap, baseRatioMap || {});
+    const idsToLoad = ids.filter(id => {
+        if (!id || ratioMap[id]) {
+            return false;
+        }
 
-    for (let i = 0; i < ids.length; i += 50) {
-        const batch = ids.slice(i, i + 50).join(",");
+        const key = getItemDetailAttemptKey(parentId, id);
+        if (itemDetailRatioAttempts.has(key)) {
+            return false;
+        }
+
+        itemDetailRatioAttempts.add(key);
+        return true;
+    });
+
+    if (!idsToLoad.length) {
+        return ratioMap;
+    }
+
+    for (let i = 0; i < idsToLoad.length; i += 50) {
+        const batch = idsToLoad.slice(i, i + 50).join(",");
 
         try {
             const query = `/Users/${userId}/Items?Ids=${batch}&Fields=Width,Height,MediaSources,PrimaryImageAspectRatio`;
@@ -308,8 +473,6 @@ async function hydrateRatiosFromItemDetails(parentId, cards, baseRatioMap) {
         }
     }
 
-    ratioMaps[parentId] = ratioMap;
-    ratioDetailHydratedParents.add(parentId);
     return ratioMap;
 }
 
@@ -319,11 +482,129 @@ function getShape(ratio) {
     return "square";
 }
 
+function getRatioKey(ratio) {
+    const numericRatio = Number(ratio);
+    const safeRatio = Number.isFinite(numericRatio) && numericRatio > 0
+        ? numericRatio
+        : DEFAULT_RATIO;
+    return safeRatio.toFixed(6);
+}
+
+function isProcessableMediaCard(card) {
+    if (!card?.dataset?.id) return false;
+    if (card.dataset.isfolder === "true") return false;
+    return true;
+}
+
+function getProcessableMediaCards(container) {
+    return [...container.querySelectorAll(".card[data-id]")].filter(isProcessableMediaCard);
+}
+
+function getLayoutCards(container) {
+    return [...container.querySelectorAll(".card[data-id]")];
+}
+
+function needsMasonryUpdate(card, ratio) {
+    const ratioKey = getRatioKey(ratio);
+    return card.dataset.masonryDone !== "1"
+        || card.dataset.masonryId !== (card.dataset.id || "")
+        || card.dataset.masonryAppliedRatio !== ratioKey;
+}
+
+function getCardsToProcess(cards, ratioMap) {
+    return cards.filter(card => {
+        const ratio = ratioMap?.[card.dataset.id] || card.dataset.masonryRatio || DEFAULT_RATIO;
+        return needsMasonryUpdate(card, ratio);
+    });
+}
+
+function getContainerCardLimit(container, totalCards) {
+    const rawLimit = Number(container.dataset.masonryProcessLimit || INITIAL_CARD_LIMIT);
+    const safeLimit = Number.isFinite(rawLimit) && rawLimit > 0
+        ? Math.floor(rawLimit)
+        : INITIAL_CARD_LIMIT;
+    const normalizedLimit = Math.min(Math.max(safeLimit, INITIAL_CARD_LIMIT), totalCards);
+    container.dataset.masonryProcessLimit = String(normalizedLimit);
+    return normalizedLimit;
+}
+
+function increaseContainerCardLimit(container, totalCards) {
+    const currentLimit = getContainerCardLimit(container, totalCards);
+    if (currentLimit >= totalCards) return false;
+
+    const nextLimit = Math.min(currentLimit + SCROLL_INCREMENT, totalCards);
+    if (nextLimit === currentLimit) return false;
+
+    container.dataset.masonryProcessLimit = String(nextLimit);
+    return true;
+}
+
+function hideCards(cards) {
+    cards.forEach(card => {
+        card.style.display = "none";
+        card.style.visibility = "hidden";
+        card.style.pointerEvents = "none";
+    });
+}
+
+function showCards(cards) {
+    cards.forEach(card => {
+        card.style.display = "";
+        card.style.visibility = "visible";
+        card.style.pointerEvents = "";
+        card.style.position = "";
+        card.style.left = "";
+        card.style.top = "";
+        card.style.transform = "";
+        card.style.width = "";
+    });
+}
+
+function scheduleAutoExpand() {
+    if (AUTO_EXPAND_STEPS <= 0) {
+        return;
+    }
+
+    clearTimeout(window._masonryAutoExpandTimer);
+
+    let step = 0;
+    const run = () => {
+        if (step >= AUTO_EXPAND_STEPS) return;
+        step += 1;
+
+        let expanded = false;
+        document.querySelectorAll(".itemsContainer[data-parentid]").forEach(container => {
+            const mediaCards = getProcessableMediaCards(container);
+            if (!mediaCards.length) return;
+            expanded = increaseContainerCardLimit(container, mediaCards.length) || expanded;
+        });
+
+        if (expanded) {
+            triggerProcess();
+            window._masonryAutoExpandTimer = setTimeout(run, AUTO_EXPAND_DELAY_MS);
+        }
+    };
+
+    window._masonryAutoExpandTimer = setTimeout(run, AUTO_EXPAND_DELAY_MS);
+}
+
+function waitForNextFrame() {
+    return new Promise(resolve => {
+        requestAnimationFrame(() => resolve());
+    });
+}
+
+async function waitForLayoutStabilization() {
+    await waitForNextFrame();
+    await waitForNextFrame();
+}
+
 function applyMasonryToCard(card, ratio) {
     const numericRatio = Number(ratio);
     const safeRatio = Number.isFinite(numericRatio) && numericRatio > 0
         ? numericRatio
         : DEFAULT_RATIO;
+    const ratioKey = getRatioKey(safeRatio);
     const scalable = card.querySelector(".cardScalable");
     const overlay = card.querySelector(".cardOverlayContainer");
     const imageContainer = card.querySelector(".cardImageContainer");
@@ -332,11 +613,13 @@ function applyMasonryToCard(card, ratio) {
     const padder = card.querySelector(".cardPadder");
 
     if (!scalable && !imageContainer) return false;
+    if (!needsMasonryUpdate(card, safeRatio)) return false;
 
     card.dataset.masonryRatio = String(safeRatio);
     card.dataset.masonryShape = getShape(safeRatio);
     card.dataset.masonryDone = "1";
     card.dataset.masonryId = card.dataset.id || "";
+    card.dataset.masonryAppliedRatio = ratioKey;
 
     card.style.width = "100%";
     card.style.margin = `0 0 ${GAP}px 0`;
@@ -355,8 +638,8 @@ function applyMasonryToCard(card, ratio) {
         scalable.style.width = "100%";
         scalable.style.height = "0";
         scalable.style.paddingBottom = `${100 / safeRatio}%`;
-        padder.style.overflow = "hidden";
-        padder.style.borderRadius = "20px 20px 0 0";
+        scalable.style.overflow = "hidden";
+        scalable.style.borderRadius = "20px 20px 0 0";
     }
 
     if (padder) {
@@ -421,35 +704,69 @@ async function processContainer(container) {
         ensureStyles();
         container.dataset.masonryActive = "1";
 
-        const cards = [...container.querySelectorAll(".card[data-id]")];
-        if (!cards.length) return;
+        const allCards = getLayoutCards(container);
+        if (!allCards.length) return;
 
-        let ratioMap = ratioMaps[parentId] || null;
-        if (!ratioMap) {
-            ratioMap = await getRatios(parentId);
+        let ratioMap = ensureParentRatioMap(parentId);
+        const currentLimit = getContainerCardLimit(container, allCards.length);
+        const visibleCards = allCards.slice(0, currentLimit);
+        const hiddenCards = allCards.slice(currentLimit);
+        hideCards(hiddenCards);
+        showCards(visibleCards);
+        updateMasonryStatus(container, currentLimit >= allCards.length, currentLimit, allCards.length);
+
+        const visibleMediaCards = visibleCards.filter(isProcessableMediaCard);
+        const cardsToProcess = getCardsToProcess(visibleCards, ratioMap);
+
+        const idsToProcess = cardsToProcess
+            .filter(isProcessableMediaCard)
+            .map(card => card.dataset.id)
+            .filter(Boolean);
+
+        if (idsToProcess.length) {
+            ratioMap = await fetchRatiosForIds(parentId, idsToProcess);
+            ratioMap = await getRatiosFallback(parentId, idsToProcess);
+            ratioMap = await hydrateRatiosFromItemDetails(parentId, idsToProcess, ratioMap);
         }
-
-        if (!ratioMap) {
-            const ids = cards.map(card => card.dataset.id).filter(Boolean);
-            ratioMap = await getRatiosFallback(ids);
-        }
-
-        ratioMap = await hydrateRatiosFromItemDetails(parentId, cards, ratioMap);
 
         let changedCount = 0;
-        cards.forEach(card => {
-            const ratio = ratioMap?.[card.dataset.id] || card.dataset.masonryRatio || DEFAULT_RATIO;
-            if (applyMasonryToCard(card, ratio)) {
-                changedCount += 1;
+        for (let index = 0; index < cardsToProcess.length; index += BATCH_SIZE) {
+            const batch = cardsToProcess.slice(index, index + BATCH_SIZE);
+
+            for (const card of batch) {
+                const ratio = ratioMap?.[card.dataset.id] || card.dataset.masonryRatio || DEFAULT_RATIO;
+                if (await applyMasonryToCard(card, ratio)) {
+                    changedCount += 1;
+                }
             }
-        });
+
+            if (index + BATCH_SIZE < cardsToProcess.length) {
+                await waitForNextFrame();
+            }
+        }
 
         if (changedCount) {
-            console.log("Masonry: Container verarbeitet:", changedCount, "Karten");
+            debugLog("Masonry: Container verarbeitet:", changedCount, "Karten");
         }
+
+        visibleCards.forEach(card => {
+            if (!isProcessableMediaCard(card) && !card.dataset.masonryDone) {
+                applyMasonryToCard(card, DEFAULT_RATIO);
+            }
+        });
+        container.style.height = "";
+        updateMasonryStatus(container, currentLimit >= allCards.length, currentLimit, allCards.length);
     } finally {
         runningParents.delete(parentId);
     }
+}
+
+function expandProcessingWindow() {
+    document.querySelectorAll(".itemsContainer[data-parentid]").forEach(container => {
+        const cards = getLayoutCards(container);
+        if (!cards.length) return;
+        increaseContainerCardLimit(container, cards.length);
+    });
 }
 
 function triggerProcess() {
@@ -463,7 +780,10 @@ new MutationObserver(() => {
 
 window.addEventListener("scroll", () => {
     clearTimeout(window._masonryScrollTimer);
-    window._masonryScrollTimer = setTimeout(triggerProcess, 120);
+    window._masonryScrollTimer = setTimeout(() => {
+        expandProcessingWindow();
+        triggerProcess();
+    }, 120);
 }, true);
 
 window.addEventListener("resize", () => {
@@ -474,3 +794,4 @@ window.addEventListener("resize", () => {
 window.triggerProcess = triggerProcess;
 setTimeout(triggerProcess, 1000);
 setTimeout(triggerProcess, 2500);
+setTimeout(scheduleAutoExpand, 1400);

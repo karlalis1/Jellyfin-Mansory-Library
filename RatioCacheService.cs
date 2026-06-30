@@ -12,13 +12,20 @@ using Microsoft.Extensions.Logging;
 
 namespace JellyfinMasonry
 {
+    public class MasonryItemCacheEntry
+    {
+        public double Ratio { get; init; }
+
+        public bool IsPhoto { get; init; }
+    }
+
     public class RatioCacheService
     {
         private readonly ILibraryManager _libraryManager;
         private readonly ILogger<RatioCacheService> _logger;
 
-        // parentId -> { itemId -> aspectRatio }
-        private readonly ConcurrentDictionary<Guid, Dictionary<Guid, double>> _cache = new();
+        // parentId -> { itemId -> cached masonry metadata }
+        private readonly ConcurrentDictionary<Guid, Dictionary<Guid, MasonryItemCacheEntry>> _cache = new();
         private readonly ConcurrentDictionary<Guid, DateTime> _cacheTimestamps = new();
 
         public static RatioCacheService? Instance { get; private set; }
@@ -37,7 +44,7 @@ namespace JellyfinMasonry
             return DateTime.UtcNow - ts < TimeSpan.FromHours(ttl);
         }
 
-        public Dictionary<Guid, double>? GetCache(Guid parentId)
+        public Dictionary<Guid, MasonryItemCacheEntry>? GetCache(Guid parentId)
         {
             if (!IsCacheValid(parentId)) return null;
             return _cache.TryGetValue(parentId, out var data) ? data : null;
@@ -61,7 +68,7 @@ namespace JellyfinMasonry
             };
 
             var items = _libraryManager.GetItemList(query);
-            var ratios = new Dictionary<Guid, double>();
+            var ratios = new Dictionary<Guid, MasonryItemCacheEntry>();
 
             foreach (var item in items)
             {
@@ -70,7 +77,11 @@ namespace JellyfinMasonry
                 var ratio = GetAspectRatio(item);
                 if (ratio.HasValue)
                 {
-                    ratios[item.Id] = ratio.Value;
+                    ratios[item.Id] = new MasonryItemCacheEntry
+                    {
+                        Ratio = ratio.Value,
+                        IsPhoto = item.MediaType == MediaType.Photo
+                    };
                 }
             }
 

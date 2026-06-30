@@ -39,7 +39,7 @@ $dll = ".\bin\Release\net9.0\JellyfinMasonry.dll"
 $pdb = ".\bin\Release\net9.0\JellyfinMasonry.pdb"
 $deps = ".\bin\Release\net9.0\JellyfinMasonry.deps.json"
 
-foreach ($file in @($dll, $pdb, $deps, ".\masonry.js")) {
+foreach ($file in @($dll, $pdb, $deps, ".\masonry.js", ".\masonry-left-right.js", ".\auto-next-page.js", ".\append-pages.js")) {
     if (Test-Path $file) {
         Copy-Item $file -Destination $outDir -Force
     }
@@ -48,4 +48,3 @@ foreach ($file in @($dll, $pdb, $deps, ".\masonry.js")) {
 Write-Host ""
 Write-Host "Done. Output files:" -ForegroundColor Green
 Get-ChildItem $outDir | Select-Object Name, Length, LastWriteTime | Format-Table -AutoSize
-
